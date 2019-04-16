@@ -118,16 +118,26 @@ D = D_guassian(num_classes=2).cuda()
 
 C = D_guassian(num_classes=2).cuda()
 
+MI = D_guassian(num_classes=2).cuda()
+
 optg = optim.Adam(G.parameters(), lr=0.002,
                       betas=(0.5, 0.999))
 optd = optim.Adam(D.parameters(), lr=0.002,
                       betas=(0.5, 0.999))
 optc = optim.Adam(C.parameters(), lr=0.002,
                       betas=(0.5, 0.999))
+optmi = optim.Adam(MI.parameters(), lr=0.002,
+                      betas=(0.5, 0.999))
 
 data1 = torch.randn(128000).cuda()
 data2 = torch.randn(128000).cuda() + 3
 
+pd.DataFrame(data1.cpu().numpy()).plot(kind='density')
+plt.xlim((-2, 6))
+plt.show()
+pd.DataFrame(data2.cpu().numpy()).plot(kind='density')
+plt.xlim((-2, 6))
+plt.show()
 pd.DataFrame(torch.cat([data1,data2],dim=0).cpu().numpy()).plot(kind='density')
 plt.xlim((-2, 6))
 plt.show()
@@ -162,7 +172,7 @@ for i in range(1000):
     optc.zero_grad()
     loss.backward()
     optc.step()
-
+p_M = torch.tensor([[0.8,0.2],[0.2,0.5]]).float().cuda()
 for _ in range(20):
     for i in range(1000):
 
@@ -190,6 +200,17 @@ for _ in range(20):
             D_loss.backward()
             optd.step()
 
+        ####Dmi
+        z = torch.randn(256, nz).cuda()
+        fake_label = torch.LongTensor(256).random_(2).cuda()
+        fake_data = G(z, label=fake_label)
+        _, mi_c = MI(fake_data)
+
+        mi_loss = F.cross_entropy(mi_c,fake_label)
+        optmi.zero_grad()
+        mi_loss.backward()
+        optmi.step()
+
         ####G
 
         if i % 10 == 0:
@@ -198,8 +219,9 @@ for _ in range(20):
             fake_data = G(z, label=fake_label)
             d_fake, _ = D(fake_data)
             _, fake_cls = C(fake_data)
+            _, mi_c = MI(fake_data)
 
-            G_loss = F.binary_cross_entropy(d_fake, torch.ones(256).cuda())  + F.cross_entropy(fake_cls,fake_label) - continus_cross_entropy(fake_cls,fake_cls)
+            G_loss = F.binary_cross_entropy(d_fake, torch.ones(256).cuda())  + F.cross_entropy(fake_cls,fake_label) - F.cross_entropy(mi_c,fake_label) #- continus_cross_entropy(fake_cls,fake_cls)
 
             optg.zero_grad()
             G_loss.backward()
