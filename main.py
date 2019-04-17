@@ -130,17 +130,31 @@ optmi = optim.Adam(MI.parameters(), lr=0.002,
                       betas=(0.5, 0.999))
 
 data1 = torch.randn(128000).cuda()
-data2 = torch.randn(128000).cuda() + 3
+data2 = torch.randn(128000).cuda() + 2
 
-pd.DataFrame(data1.cpu().numpy()).plot(kind='density')
-plt.xlim((-2, 6))
-plt.show()
-pd.DataFrame(data2.cpu().numpy()).plot(kind='density')
-plt.xlim((-2, 6))
-plt.show()
-pd.DataFrame(torch.cat([data1,data2],dim=0).cpu().numpy()).plot(kind='density')
-plt.xlim((-2, 6))
-plt.show()
+
+# pd.DataFrame(data1.cpu().numpy()).plot(kind='density')
+# # plt.xlim((-2, 6))
+# # plt.show()
+# pd.DataFrame(data2.cpu().numpy()).plot(kind='density')
+# # plt.xlim((-3, 6))
+# # plt.show()
+# pd.DataFrame(torch.cat([data1,data2],dim=0).cpu().numpy()).plot(kind='density')
+df1 = pd.DataFrame()
+df2 = pd.DataFrame()
+
+df1['score_{0}'.format(0)] = data1.cpu().numpy()
+df1['score_{0}'.format(1)] = data2.cpu().numpy()
+df2['score_{0}'.format(2)] = torch.cat([data1,data2],dim=0).cpu().numpy()
+
+fig, ax = plt.subplots(1,1)
+for s in df1.columns:
+    df1[s].plot(kind='kde')
+
+for s in df2.columns:
+    df2[s].plot(kind='kde')
+plt.xlim((-3, 6))
+fig.show()
 
 def continus_cross_entropy(x, target):
     probt = F.softmax(x,dim=1)
@@ -201,15 +215,15 @@ for _ in range(20):
             optd.step()
 
         ####Dmi
-        z = torch.randn(256, nz).cuda()
-        fake_label = torch.LongTensor(256).random_(2).cuda()
-        fake_data = G(z, label=fake_label)
-        _, mi_c = MI(fake_data)
-
-        mi_loss = F.cross_entropy(mi_c,fake_label)
-        optmi.zero_grad()
-        mi_loss.backward()
-        optmi.step()
+        # z = torch.randn(256, nz).cuda()
+        # fake_label = torch.LongTensor(256).random_(2).cuda()
+        # fake_data = G(z, label=fake_label)
+        # _, mi_c = MI(fake_data)
+        #
+        # mi_loss = F.cross_entropy(mi_c,fake_label)
+        # optmi.zero_grad()
+        # mi_loss.backward()
+        # optmi.step()
 
         ####G
 
@@ -221,7 +235,7 @@ for _ in range(20):
             _, fake_cls = C(fake_data)
             _, mi_c = MI(fake_data)
 
-            G_loss = F.binary_cross_entropy(d_fake, torch.ones(256).cuda())  + F.cross_entropy(fake_cls,fake_label) - F.cross_entropy(mi_c,fake_label) #- continus_cross_entropy(fake_cls,fake_cls)
+            G_loss = F.binary_cross_entropy(d_fake, torch.ones(256).cuda())  + F.cross_entropy(fake_cls,fake_label) #- F.cross_entropy(mi_c,fake_label) #- continus_cross_entropy(fake_cls,fake_cls)
 
             optg.zero_grad()
             G_loss.backward()
@@ -233,25 +247,41 @@ for _ in range(20):
 
 z = torch.randn(10000,nz).cuda()
 label = torch.zeros(10000).long().cuda()#torch.LongTensor(10000).random_(2).cuda()#
-generate_data1 = G(z=z,label=label)
+data1 = G(z=z,label=label).squeeze().cpu().detach()
 
-pd.DataFrame(generate_data1.cpu().detach().numpy()).plot(kind='density')
-plt.xlim((-2, 6))
-plt.show()
+# pd.DataFrame(generate_data1.cpu().detach().numpy()).plot(kind='density')
+# plt.xlim((-3, 6))
+# plt.show()
 
 # plot_density(generate_data1.cpu().detach().numpy())
 
 z = torch.randn(10000,nz).cuda()
 label = torch.ones(10000).long().cuda()#torch.LongTensor(10000).random_(2).cuda()#
-generate_data2 = G(z=z,label=label)
+data2 = G(z=z,label=label).squeeze().cpu().detach()
 
-pd.DataFrame(generate_data2.cpu().detach().numpy()).plot(kind='density')
-plt.xlim((-2, 6))
-plt.show()
+# pd.DataFrame(generate_data2.cpu().detach().numpy()).plot(kind='density')
+# plt.xlim((-3, 6))
+# plt.show()
+#
+# pd.DataFrame(torch.cat([generate_data1,generate_data2],dim=0).cpu().detach().numpy()).plot(kind='density')
+# plt.xlim((-3, 6))
+# plt.show()
 
-pd.DataFrame(torch.cat([generate_data1,generate_data2],dim=0).cpu().detach().numpy()).plot(kind='density')
-plt.xlim((-2, 6))
-plt.show()
+df1 = pd.DataFrame()
+df2 = pd.DataFrame()
+
+df1['score_{0}'.format(0)] = data1.numpy()
+df1['score_{0}'.format(1)] = data2.numpy()
+df2['score_{0}'.format(2)] = torch.cat([data1,data2],dim=0).numpy()
+
+fig, ax = plt.subplots(1,1)
+for s in df1.columns:
+    df1[s].plot(kind='kde')
+
+for s in df2.columns:
+    df2[s].plot(kind='kde')
+plt.xlim((-3, 6))
+fig.show()
 
 # plot_density(generate_data2.cpu().detach().numpy())
 
