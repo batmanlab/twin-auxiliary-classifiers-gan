@@ -158,12 +158,10 @@ for s in df2.columns:
 plt.xlim((-3, 9))
 fig.show()
 
-def continus_cross_entropy(x, target):
+def clip_cross_entropy(x, target):
     probt = F.softmax(x,dim=1)
-    target = F.softmax(target,dim=1)
 
-    out = torch.log(probt)
-    loss = ((-target*out).sum(1)).mean()
+    loss = F.nll_loss(probt,target)
     return loss
 
 # plot_density(torch.cat([data1,data2],dim=0).cpu().numpy())
@@ -233,7 +231,7 @@ for _ in range(20):
             _, fake_cls = C(fake_data)
             _, mi_c = MI(fake_data)
 
-            G_loss = F.binary_cross_entropy(d_fake, torch.ones(256).cuda())  - F.cross_entropy(mi_c,fake_label) # + F.cross_entropy(fake_cls,fake_label) #- continus_cross_entropy(fake_cls,fake_cls)
+            G_loss = F.binary_cross_entropy(d_fake, torch.ones(256).cuda()) + F.cross_entropy(fake_cls,fake_label) - clip_cross_entropy(mi_c,fake_label) #  #- continus_cross_entropy(fake_cls,fake_cls)
 
             optg.zero_grad()
             G_loss.backward()
