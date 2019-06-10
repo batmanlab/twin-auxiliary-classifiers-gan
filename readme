@@ -1,0 +1,34 @@
+1. To download the preprocessed dataset, please use command 'sshpass -p Xyw6928@ scp -r yanwuxu@pghbio.bridges.psc.edu:/pylon5/ac5616p/yanwuxu/VGGFACE500_TAC/Biggan_result/data/ILSVRC128.hdf5 ./Biggan_result/data'
+
+2. To run our Twin Auxiliary Classifier GAN model (TAC-GAN), then do 'sh ./scripts/twin_ac_launch_BigGAN_ch64_bs256x8.sh'
+
+3. The details of args in the 'twin_ac_launch_BigGAN_ch64_bs256x8.sh' is:
+
+--dataset I128_hdf5 --parallel --shuffle  --num_workers 16 --batch_size 256 --load_in_mem  \
+--loss_type Twin_AC --AC \
+#loss gradient accumulation: no need to change
+--num_G_accumulations 4 --num_D_accumulations 4 \
+#GAN training hyper-parameters, the learning rate and steps of G and D may make some difference
+--num_D_steps 2 --num_G_steps 2 --G_lr 1e-4 --D_lr 4e-4 --D_B2 0.999 --G_B2 0.999 \
+#The feature map resolution where adding Self-Attention layer
+--G_attn 64 --D_attn 64 \
+#The activation function of G and D
+--G_nl inplace_relu --D_nl inplace_relu \
+#The Spectral Norm hyper-paramenters, no need to change
+--SN_eps 1e-6 --BN_eps 1e-5 --adam_eps 1e-6 \
+#orthogonal regularization of G, 0.0 means no orthogonal regularization in training time, no need to change
+--G_ortho 0.0 \
+#shared embedding of label one-hot embedding in each G Conditional Batch-Normalization layer, no need to change
+--G_shared \
+#orthogonal initialization of G and D network
+--G_init ortho --D_init ortho \
+#embedding vector size of latent variable and label one-hot embedding
+--hier --dim_z 120 --shared_dim 128 \
+--G_eval_mode \
+#the multiplier of network channel numbers
+--G_ch 64 --G_ch 64 \
+#apply Exponential Moving Average on G network parameters, no need to change
+--ema --use_ema --ema_start 20000 \
+#testing and model saving steps during training
+--test_every 8000 --save_every 1000 --num_best_copies 5 --num_save_copies 2 --seed 0 \
+--use_multiepoch_sampler
