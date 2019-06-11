@@ -2,7 +2,7 @@
 
 2. To run our Twin Auxiliary Classifier GAN model (TAC-GAN), first do 'cd BigGAN-PyTorch',then do 'sh ./scripts/twin_ac_launch_BigGAN_ch64_bs256x8.sh'
 
-3. The details of args in the 'twin_ac_launch_BigGAN_ch64_bs256x8.sh' is:
+3. The details of args in the 'twin_ac_launch_BigGAN_ch64_bs256x8.sh':
 
 --dataset I128_hdf5 --parallel --shuffle  --num_workers 16 --batch_size 256 --load_in_mem  \
 --loss_type Twin_AC --AC \
