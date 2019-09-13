@@ -1,5 +1,7 @@
 This repository is the official implementation of paper Twin Auxiliary Classifiers GAN
 
+blabla
+
 1. To download the preprocessed dataset, please use command 'sshpass -p Xyw6928@ scp -r yanwuxu@pghbio.bridges.psc.edu:/pylon5/ac5616p/yanwuxu/VGGFACE500_TAC/Biggan_result/data/ILSVRC128.hdf5 ./Biggan_result/data'
 
 2. To run our Twin Auxiliary Classifier GAN model (TAC-GAN), first do 'cd BigGAN-PyTorch',then do 'sh ./scripts/twin_ac_launch_BigGAN_ch64_bs256x8.sh'
