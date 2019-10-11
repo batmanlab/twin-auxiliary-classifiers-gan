@@ -54,8 +54,11 @@ FIrstly, you need to transfer imagenet1000 image to HDF5 file, follow the comman
 
 ### Running on Cifar100
 
-1. cd TAC-BigGAN
-2. sh scripts/twin_ac_launch_cifar100_ema.sh
+```
+cd TAC-BigGAN
+sh scripts/twin_ac_launch_cifar100_ema.sh
+
+```
 
 if you want to change the weight of auxiliary classifier, you can modify the '--AC_weight' arguments in 'twin_ac_launch_cifar100_ema.sh' script. The same for AC-GAN and Projection-GAN, change script to 'ac_launch_cifar100_ema.sh' and 'projection_launch_cifar100_ema.sh' respectively.
 
