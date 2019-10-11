@@ -38,9 +38,12 @@ This implementation on cifar100 and Imagenet100 is based on [pytorch of BigGAN](
 ## Simulation on MOG toy data
 
 To run the 1-D and 2-D Mixture of Gaussian experiments, run the following steps and the results will be automatically saved in the MOG/'distance'_1D and MOG/'distance'_2D folder
-1. cd MOG/
-2. python 1-D_mix_gaussian.py
-3. python 2-D_mix_gaussian.py
+
+```
+cd MOG/
+python 1-D_mix_gaussian.py
+python 2-D_mix_gaussian.py
+```
 
 ## Experiments on real data
 For the real data experiments, the code is based on [pytorch BigGAN](https://github.com/ajbrock/BigGAN-PyTorch).
