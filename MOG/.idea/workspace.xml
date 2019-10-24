@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0adfcc06-27fe-49b1-a13a-e7f4a58120d5" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="0adfcc06-27fe-49b1-a13a-e7f4a58120d5" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,24 +36,16 @@
         </counts>
       </usages-collector>
     </session>
-    <session id="-78363654">
-      <usages-collector id="statistics.lifecycle.project">
-        <counts>
-          <entry key="project.closed" value="1" />
-          <entry key="project.open.time.0" value="1" />
-          <entry key="project.open.time.3" value="1" />
-          <entry key="project.opened" value="2" />
-        </counts>
-      </usages-collector>
-    </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/1-D_mix_gaussian.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="5725">
-              <caret line="490" column="22" selection-start-line="490" selection-start-column="22" selection-end-line="490" selection-end-column="22" />
+            <state>
+              <folding>
+                <element signature="e#2#11#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -63,7 +53,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/mmd_metric.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1530">
+            <state relative-caret-position="1410">
               <caret line="102" column="24" selection-start-line="102" selection-start-column="24" selection-end-line="102" selection-end-column="24" />
               <folding>
                 <element signature="e#0#47#0" expanded="true" />
@@ -75,7 +65,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/2-D_mix_gaussian.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2089">
+            <state>
               <folding>
                 <element signature="e#1#10#0" expanded="true" />
               </folding>
@@ -153,7 +143,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -165,6 +154,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -328,10 +318,9 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="144" y="24" width="1536" height="835" extended-state="1" />
-    <editor active="true" />
+    <frame x="144" y="24" width="1536" height="835" extended-state="0" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.22824632" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.22289157" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -369,11 +358,9 @@
     <entry file="file:///tmp/fz3temp-3/utils.py" />
     <entry file="file:///tmp/fz3temp-3/utils 2.py" />
     <entry file="file:///tmp/fz3temp-4/utils.py" />
-    <entry file="file://$PROJECT_DIR$/hinge_loss.py" />
-    <entry file="file://$PROJECT_DIR$/test.py" />
     <entry file="file://$PROJECT_DIR$/mmd_metric.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1530">
+        <state relative-caret-position="1410">
           <caret line="102" column="24" selection-start-line="102" selection-start-column="24" selection-end-line="102" selection-end-column="24" />
           <folding>
             <element signature="e#0#47#0" expanded="true" />
@@ -381,9 +368,26 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/hinge_loss.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="495">
+          <caret line="33" selection-start-line="33" selection-end-line="33" />
+          <folding>
+            <element signature="e#0#12#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="60">
+          <caret line="4" lean-forward="true" selection-start-line="4" selection-end-line="4" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/2-D_mix_gaussian.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2089">
+        <state>
           <folding>
             <element signature="e#1#10#0" expanded="true" />
           </folding>
@@ -392,8 +396,10 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/1-D_mix_gaussian.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5725">
-          <caret line="490" column="22" selection-start-line="490" selection-start-column="22" selection-end-line="490" selection-end-column="22" />
+        <state>
+          <folding>
+            <element signature="e#2#11#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
