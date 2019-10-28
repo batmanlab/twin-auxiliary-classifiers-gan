@@ -20,7 +20,9 @@ Visualize the biased reconstruction of AC-GAN and our TAC-GAN correction to this
 This implementation on cifar100 and Imagenet100 is based on [pytorch of BigGAN](https://github.com/ajbrock/BigGAN-PyTorch) implementation
 To prepare for the env for running our code. cd the repository and run 
 
-```conda env create -f environment.yml```
+```conda install pytorch torchvision cudatoolkit=10.1 -c pytorch``` (This should work directly)
+
+```conda env create -f environment.yml``` (Alternative)
 
 ### Overlap MNIST with '0' '1' and '0' '2'
 
