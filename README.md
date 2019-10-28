@@ -5,7 +5,7 @@ and contains the [PyTorch](https://pytorch.org) source code to
 reproduce the experiments in our NeurIPS2019 paper [Twin Auxiliary Classifiers GAN](https://arxiv.org/abs/1907.02690) by Mingming Gong*, Yanwu Xu*, Chunyuan Li, Kun Zhang, and Kayhan Batmanghelich
 
 <p align="center">
-  <img width="75%" height="%75" src="https://github.com/xuyanwu/TAC-GAN/blob/master/figure/tac_gan_scheme.png">
+  <img width="75%" height="%75" src="https://github.com/batmanlab/twin_ac/blob/master/figure/tac_gan_scheme.png">
 </p>
 
 # Visualization on Mixture of Gaussian
