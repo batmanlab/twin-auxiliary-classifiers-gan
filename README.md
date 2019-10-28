@@ -1,10 +1,14 @@
 # TAC-GAN
 
-This is the official pytorch implemention of the NeurIPS2019 paper [Twin Auxiliary Classifiers GAN](https://arxiv.org/abs/1907.02690) by Mingming Gong*, Yanwu Xu*, Chunyuan Li, Kun Zhang, and Kayhan Batmanghelich
+This repository is by [Yanwu Xu](http://xuyanwu.github.io)
+and contains the [PyTorch](https://pytorch.org) source code to
+reproduce the experiments in our NeurIPS2019 paper [Twin Auxiliary Classifiers GAN](https://arxiv.org/abs/1907.02690) by Mingming Gong*, Yanwu Xu*, Chunyuan Li, Kun Zhang, and Kayhan Batmanghelich
 
 <p align="center">
   <img width="75%" height="%75" src="https://github.com/xuyanwu/TAC-GAN/blob/master/figure/tac_gan_scheme.png">
 </p>
+
+# Visualization on Mixture of Gaussian
 
 Visualize the biased reconstruction of AC-GAN and our TAC-GAN correction to this as well as Projection-GAN.
 
@@ -38,10 +42,12 @@ To prepare for the env for running our code. cd the repository and run 'conda en
 
 ## Simulation on MOG toy data
 
-To run the 1-D and 2-D Mixture of Gaussian experiments, run the following steps and the results will be automatically saved in the MOG/'distance'_1D and MOG/'distance'_2D folder
-1. cd MOG/
-2. python 1-D_mix_gaussian.py
-3. python 2-D_mix_gaussian.py
+```
+MOG
+├── MOG_visualization.ipynb - Notebook to run 1-D MOG.
+├── One_Dimensional_MOG.py - Script to run 1-D MOG.
+└── Two_Dimensional_MOG.py - Script to run 2-D MOG.
+```
 
 ## Experiments on real data
 For the real data experiments, the code is based on [pytorch BigGAN](https://github.com/ajbrock/BigGAN-PyTorch).
@@ -50,18 +56,19 @@ For the real data experiments, the code is based on [pytorch BigGAN](https://git
 
 FIrstly, you need to transfer imagenet1000 image to HDF5 file, follow the command of [pytorch BigGAN](https://github.com/ajbrock/BigGAN-PyTorch) implementation
 
-### Running on Cifar100
+### Running on Cifar100 and Imagenet1000
 
-1. cd TAC-BigGAN
-2. sh scripts/twin_ac_launch_cifar100_ema.sh
+```
+MOG
+├── TAC-BigGAN
+   ├── Two_Dimensional_MOG.py - Script to run 2-D MOG.
+       ├── scripts
+          ├── twin_ac_launch_cifar100_ema.sh - Script to run TAC-GAN on cifar100
+          ├── twin_ac_launch_BigGAN_ch64_bs256x8.sh - Script to run TAC-GAN on Imagenet1000
+```
 
 if you want to change the weight of auxiliary classifier, you can modify the '--AC_weight' arguments in 'twin_ac_launch_cifar100_ema.sh' script. The same for AC-GAN and Projection-GAN, change script to 'ac_launch_cifar100_ema.sh' and 'projection_launch_cifar100_ema.sh' respectively.
 
-### Running on Imagenet1000
-The steps are a little different from cifar100
+# Acknowledgments
 
-1. cd TAC-BigGAN
-2. sh twin_ac_launch_BigGAN_ch64_bs256x8.sh
-
-if you want to change the weight of auxiliary classifier, you can modify the '--AC_weight' arguments in 'twin_ac_launch_BigGAN_ch64_bs256x8.sh' script. The same for AC-GAN and Projection-GAN, change script to 'ac_launch_BigGAN_ch64_bs256x8.sh' and 'projection_launch_BigGAN_ch64_bs256x8.sh' respectively.
-
+This work was partially supported by NIH Award Number 1R01HL141813-01, NSF 1839332 Tripod+X, and SAP SE. We gratefully acknowledge the support of NVIDIA Corporation with the donation of the Titan X Pascal GPU used for this research. We were also grateful for the computational resources provided by Pittsburgh SuperComputing grant number TG-ASC170024.
