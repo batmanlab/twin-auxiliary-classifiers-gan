@@ -1,6 +1,8 @@
 # TAC-GAN
 
-This is the official pytorch implemention of the NeurIPS2019 paper [Twin Auxiliary Classifiers GAN](https://arxiv.org/abs/1907.02690) by Mingming Gong*, Yanwu Xu*, Chunyuan Li, Kun Zhang, and Kayhan Batmanghelich
+This repository is by [Yanwu Xu](http://xuyanwu.github.io)
+and contains the [PyTorch](https://pytorch.org) source code to
+reproduce the experiments in our NeurIPS2019 paper [Twin Auxiliary Classifiers GAN](https://arxiv.org/abs/1907.02690) by Mingming Gong*, Yanwu Xu*, Chunyuan Li, Kun Zhang, and Kayhan Batmanghelich
 
 <p align="center">
   <img width="75%" height="%75" src="https://github.com/xuyanwu/TAC-GAN/blob/master/figure/tac_gan_scheme.png">
