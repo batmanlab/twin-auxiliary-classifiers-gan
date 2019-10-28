@@ -63,10 +63,9 @@ FIrstly, you need to transfer imagenet1000 image to HDF5 file, follow the comman
 ```
 MOG
 ├── TAC-BigGAN
-   ├── Two_Dimensional_MOG.py - Script to run 2-D MOG.
-       ├── scripts
-          ├── twin_ac_launch_cifar100_ema.sh - Script to run TAC-GAN on cifar100
-          ├── twin_ac_launch_BigGAN_ch64_bs256x8.sh - Script to run TAC-GAN on Imagenet1000
+   ├── scripts
+      ├── twin_ac_launch_cifar100_ema.sh - Script to run TAC-GAN on cifar100
+      ├── twin_ac_launch_BigGAN_ch64_bs256x8.sh - Script to run TAC-GAN on Imagenet1000
 ```
 
 if you want to change the weight of auxiliary classifier, you can modify the '--AC_weight' arguments in 'twin_ac_launch_cifar100_ema.sh' script. The same for AC-GAN and Projection-GAN, change script to 'ac_launch_cifar100_ema.sh' and 'projection_launch_cifar100_ema.sh' respectively.
