@@ -42,12 +42,9 @@ To prepare for the env for running our code. cd the repository and run 'conda en
 
 ## Simulation on MOG toy data
 
-To straightly run on the MOG, you can run with the notebook 'MOG_visualization.ipynb'
-
-For more settings, details are below:
-
 ```
 MOG
+├── MOG_visualization.ipynb - Notebook to run 1-D MOG.
 ├── One_Dimensional_MOG.py - Script to run 1-D MOG.
 └── Two_Dimensional_MOG.py - Script to run 2-D MOG.
 ```
