@@ -2,7 +2,7 @@
 
 This repository is by [Yanwu Xu](http://xuyanwu.github.io)
 and contains the [PyTorch](https://pytorch.org) source code to
-reproduce the experiments in our NeurIPS2019 paper [Twin Auxiliary Classifiers GAN](https://arxiv.org/abs/1907.02690) by Mingming Gong*, Yanwu Xu*, Chunyuan Li, Kun Zhang, and Kayhan Batmanghelich
+reproduce the experiments in our NeurIPS2019 paper [Twin Auxiliary Classifiers GAN](https://arxiv.org/abs/1907.02690) by [Mingming Gong*](https://mingming-gong.github.io/), [Yanwu Xu*](http://xuyanwu.github.io), [Chunyuan Li](http://chunyuan.li/), [Kun Zhang](http://www.andrew.cmu.edu/user/kunz1/), [and Kayhan Batmanghelich](https://kayhan.dbmi.pitt.edu/)
 
 <p align="center">
   <img width="75%" height="%75" src="https://github.com/batmanlab/twin_ac/blob/master/figure/tac_gan_scheme.png">
