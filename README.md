@@ -25,19 +25,19 @@ To prepare for the env for running our code. cd the repository and run
 ### Overlap MNIST with '0' '1' and '0' '2'
 
 <p align="center">
-  <img width="75%" height="%75" src="https://github.com/xuyanwu/TAC-GAN/blob/master/figure/overlap_MNIST.png">
+  <img width="75%" height="%75" src="https://github.com/batmanlab/twin_ac/blob/master/figure/overlap_MNIST.png">
 </p>
 
 ### Cifar100 generation evaluation with Inception Score, FID and LPIPS, 32 resolution
 
 <p align="center">
-  <img width="75%" height="%75" src="https://github.com/xuyanwu/TAC-GAN/blob/master/figure/cifar100.png">
+  <img width="75%" height="%75" src="https://github.com/batmanlab/twin_ac/blob/master/figure/cifar100.png">
 </p>
 
 ### IMANGENET1000 generated images, 128 resolution
 
 <p align="center">
-  <img width="75%" height="%75" src="https://github.com/xuyanwu/TAC-GAN/blob/master/figure/part_of_imagenet.png">
+  <img width="75%" height="%75" src="https://github.com/batmanlab/twin_ac/blob/master/figure/part_of_imagenet.png">
 </p>
 
 # To replicate our results of our NeuraIPS paper, do the follow:
