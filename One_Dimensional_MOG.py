@@ -5,13 +5,9 @@ import torch.nn as nn
 import numpy as np
 import torch.optim as optim
 import torch.nn.functional as F
-import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 from mmd_metric import polynomial_mmd
-import time
-import torch.multiprocessing as mp
-mp = mp.get_context('spawn')
 
 def plot_density(flights,binwidth=0.1):
     ax = plt.subplot(1,1,1)
@@ -87,6 +83,7 @@ class D_guassian(nn.Module):
         )
         self.gan_linear = nn.Linear(10, 1)
         self.aux_linear = nn.Linear(10, num_classes)
+        self.mi_linear = nn.Linear(10, num_classes)
 
         if not self.AC:
             self.projection = nn.Embedding(num_embeddings=num_classes,embedding_dim=10)
@@ -99,12 +96,13 @@ class D_guassian(nn.Module):
         x = self.encode(input)
         x = x.view(-1, 10)
         c = self.aux_linear(x)
+        mi = self.mi_linear(x)
 
         s = self.gan_linear(x)
         if not self.AC:
             s += (self.projection(y)*x).sum(dim=1,keepdim=True)
         s = self.sigmoid(s)
-        return s.squeeze(1), c.squeeze(1)
+        return s.squeeze(1), c.squeeze(1), mi.squeeze(1)
 
     def __initialize_weights(self):
         for m in self.modules():
@@ -114,6 +112,55 @@ class D_guassian(nn.Module):
                 m.weight.data.normal_(1.0, 0.02)
                 m.bias.data.fill_(0)
 
+def train(data1,data2,data3,nz,G,D,optd,optg,AC=True,MI=True):
+    for _ in range(20):
+        for i in range(1000):
+
+            #####D step
+            for _ in range(1):
+                data = torch.cat(
+                    [data1[128 * i:128 * i + 128], data2[128 * i:128 * i + 128], data3[128 * i:128 * i + 128]],
+                    dim=0).unsqueeze(dim=1)
+                label = torch.cat([torch.ones(128).cuda().long()*0, torch.ones(128).cuda().long()*1, torch.ones(128).cuda().long()*2],dim=0)
+
+                ###D
+                d_real, c, _ = D(data)
+
+                z = torch.randn(256, nz).cuda()
+                fake_label = torch.LongTensor(256).random_(3).cuda()
+                fake_data = G(z, label=fake_label)
+                d_fake, _, mi = D(fake_data)
+
+
+                D_loss = F.binary_cross_entropy(d_real, torch.ones(384).cuda()) \
+                         + F.binary_cross_entropy(d_fake, torch.zeros(256).cuda())
+                if AC:
+                    D_loss += F.cross_entropy(c, label)
+                if MI:
+                    D_loss += F.cross_entropy(mi, fake_label)
+
+                optd.zero_grad()
+                D_loss.backward()
+                optd.step()
+
+            #####G step
+            if i % 10 == 0:
+                z = torch.randn(256, nz).cuda()
+                fake_label = torch.LongTensor(256).random_(3).cuda()
+                fake_data = G(z, label=fake_label)
+                d_fake, c, mi = D(fake_data)
+
+                G_loss = F.binary_cross_entropy(d_fake, torch.ones(256).cuda())
+
+                if AC:
+                    G_loss += F.cross_entropy(c,fake_label)
+                if MI:
+                    G_loss += F.cross_entropy(mi, fake_label)
+
+                optg.zero_grad()
+                G_loss.backward()
+                optg.step()
+
 def multi_results(distance):
     # time.sleep(distance*3)
     nz = 2
@@ -121,18 +168,10 @@ def multi_results(distance):
 
     D = D_guassian(num_classes=3).cuda()
 
-    C = D_guassian(num_classes=3).cuda()
-
-    MI = D_guassian(num_classes=3).cuda()
-
     optg = optim.Adam(G.parameters(), lr=0.002,
                       betas=(0.5, 0.999))
     optd = optim.Adam(D.parameters(), lr=0.002,
                       betas=(0.5, 0.999))
-    optc = optim.Adam(C.parameters(), lr=0.002,
-                      betas=(0.5, 0.999))
-    optmi = optim.Adam(MI.parameters(), lr=0.002,
-                       betas=(0.5, 0.999))
 
     distance = (distance+2)/2
     if os.path.exists(os.path.join('MOG','1D', str(distance) + '_1D')):
@@ -166,78 +205,7 @@ def multi_results(distance):
     plt.title('Original')
     fig.savefig(save_path + '/original.eps')
 
-    for i in range(1000):
-        data = torch.cat([data1[128 * i:128 * i + 128], data2[128 * i:128 * i + 128], data3[128 * i:128 * i + 128]],
-                         dim=0).unsqueeze(dim=1)
-
-        label1 = torch.zeros(128).cuda()
-        label2 = torch.ones(128).cuda()
-        label3 = torch.ones(128).cuda() + 1
-
-        label = torch.cat([label1, label2, label3], dim=0).long()
-
-        _, predict_c = C(data)
-
-        loss = F.cross_entropy(predict_c, label)
-
-        #print(loss)
-
-        optc.zero_grad()
-        loss.backward()
-        optc.step()
-    for _ in range(20):
-        for i in range(1000):
-
-            for _ in range(1):
-                data = torch.cat(
-                    [data1[128 * i:128 * i + 128], data2[128 * i:128 * i + 128], data3[128 * i:128 * i + 128]],
-                    dim=0).unsqueeze(dim=1)
-
-                ###D
-                d_real, _ = D(data)
-
-                z = torch.randn(256, nz).cuda()
-                fake_label = torch.LongTensor(256).random_(3).cuda()
-                fake_data = G(z, label=fake_label)
-                d_fake, _ = D(fake_data)
-
-                D_loss = F.binary_cross_entropy(d_real, torch.ones(384).cuda()) + F.binary_cross_entropy(d_fake,
-                                                                                                         torch.zeros(
-                                                                                                             256).cuda())
-
-
-                optd.zero_grad()
-                D_loss.backward()
-                optd.step()
-
-            ####Dmi
-            z = torch.randn(256, nz).cuda()
-            fake_label = torch.LongTensor(256).random_(3).cuda()
-            fake_data = G(z, label=fake_label)
-            _, mi_c = MI(fake_data)
-
-            mi_loss = F.cross_entropy(mi_c, fake_label)
-            optmi.zero_grad()
-            mi_loss.backward()
-            optmi.step()
-
-            ####G
-
-            if i % 10 == 0:
-                z = torch.randn(256, nz).cuda()
-                fake_label = torch.LongTensor(256).random_(3).cuda()
-                fake_data = G(z, label=fake_label)
-                d_fake, _ = D(fake_data)
-                _, fake_cls = C(fake_data)
-                _, mi_c = MI(fake_data)
-
-                G_loss = F.binary_cross_entropy(d_fake, torch.ones(256).cuda()) + F.cross_entropy(fake_cls,fake_label) - F.cross_entropy(mi_c, fake_label)
-
-                optg.zero_grad()
-                G_loss.backward()
-                optg.step()
-
-            #print(D_loss)
+    train(data1,data2,data3,G,D,optd,optg,AC=True,MI=True)
 
     z = torch.randn(10000, nz).cuda()
     label = torch.zeros(10000).long().cuda()  # torch.LongTensor(10000).random_(2).cuda()#
@@ -295,44 +263,42 @@ def multi_results(distance):
     for _ in range(20):
         for i in range(1000):
 
+            #####D step
             for _ in range(1):
                 data = torch.cat(
                     [data1[128 * i:128 * i + 128], data2[128 * i:128 * i + 128], data3[128 * i:128 * i + 128]],
                     dim=0).unsqueeze(dim=1)
+                label = torch.cat([torch.ones(128).cuda().long() * 0, torch.ones(128).cuda().long() * 1,
+                                   torch.ones(128).cuda().long() * 2], dim=0)
 
                 ###D
-                d_real, _ = D(data)
+                d_real, c, _ = D(data)
 
                 z = torch.randn(256, nz).cuda()
                 fake_label = torch.LongTensor(256).random_(3).cuda()
                 fake_data = G(z, label=fake_label)
-                d_fake, _ = D(fake_data)
+                d_fake, _, mi = D(fake_data)
 
-                D_loss = F.binary_cross_entropy(d_real, torch.ones(384).cuda()) + F.binary_cross_entropy(d_fake,
-                                                                                                         torch.zeros(
-                                                                                                             256).cuda())
-
+                D_loss = F.binary_cross_entropy(d_real, torch.ones(384).cuda()) \
+                         + F.binary_cross_entropy(d_fake, torch.zeros(256).cuda()) \
+                         + F.cross_entropy(c, label)
 
                 optd.zero_grad()
                 D_loss.backward()
                 optd.step()
 
-
+            #####G step
             if i % 10 == 0:
                 z = torch.randn(256, nz).cuda()
                 fake_label = torch.LongTensor(256).random_(3).cuda()
                 fake_data = G(z, label=fake_label)
-                d_fake, _ = D(fake_data)
-                _, fake_cls = C(fake_data)
-                _, mi_c = MI(fake_data)
+                d_fake, c, mi = D(fake_data)
 
-                G_loss = F.binary_cross_entropy(d_fake, torch.ones(256).cuda()) + F.cross_entropy(fake_cls, fake_label)
+                G_loss = F.binary_cross_entropy(d_fake, torch.ones(256).cuda()) + F.cross_entropy(c,fake_label)
 
                 optg.zero_grad()
                 G_loss.backward()
                 optg.step()
-
-            #print(D_loss)
 
     z = torch.randn(10000, nz).cuda()
     label = torch.zeros(10000).long().cuda()  # torch.LongTensor(10000).random_(2).cuda()#
@@ -391,46 +357,41 @@ def multi_results(distance):
     for _ in range(20):
         for i in range(1000):
 
+            #####D step
             for _ in range(1):
                 data = torch.cat(
                     [data1[128 * i:128 * i + 128], data2[128 * i:128 * i + 128], data3[128 * i:128 * i + 128]],
                     dim=0).unsqueeze(dim=1)
-
-                label1 = torch.zeros(128).cuda()
-                label2 = torch.ones(128).cuda()
-                label3 = torch.ones(128).cuda() + 1
-
-                label = torch.cat([label1, label2, label3], dim=0).long()
+                label = torch.cat([torch.ones(128).cuda().long() * 0, torch.ones(128).cuda().long() * 1,
+                                   torch.ones(128).cuda().long() * 2], dim=0)
 
                 ###D
-                d_real, _ = D(data,label)
+                d_real, c, _ = D(data, label)
 
                 z = torch.randn(256, nz).cuda()
                 fake_label = torch.LongTensor(256).random_(3).cuda()
                 fake_data = G(z, label=fake_label)
-                d_fake, _ = D(fake_data,fake_label)
+                d_fake, _, mi = D(fake_data, fake_label)
 
-                D_loss = F.binary_cross_entropy(d_real, torch.ones(384).cuda()) + F.binary_cross_entropy(d_fake,
-                                                                                                         torch.zeros(
-                                                                                                             256).cuda())
+                D_loss = F.binary_cross_entropy(d_real, torch.ones(384).cuda()) \
+                         + F.binary_cross_entropy(d_fake, torch.zeros(256).cuda())
 
                 optd.zero_grad()
                 D_loss.backward()
                 optd.step()
 
+            #####G step
             if i % 10 == 0:
                 z = torch.randn(256, nz).cuda()
                 fake_label = torch.LongTensor(256).random_(3).cuda()
                 fake_data = G(z, label=fake_label)
-                d_fake, _ = D(fake_data,fake_label)
+                d_fake, c, mi = D(fake_data, fake_label)
 
                 G_loss = F.binary_cross_entropy(d_fake, torch.ones(256).cuda())
 
                 optg.zero_grad()
                 G_loss.backward()
                 optg.step()
-
-            #print(D_loss)
 
     z = torch.randn(10000, nz).cuda()
     label = torch.zeros(10000).long().cuda()  # torch.LongTensor(10000).random_(2).cuda()#
@@ -495,4 +456,8 @@ def multi_results(distance):
 
     for content in result:
         file.write(content + '\n')
+
+if __name__ == '__main__':
+
+    multi_results(5)
 
