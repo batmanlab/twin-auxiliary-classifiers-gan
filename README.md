@@ -72,6 +72,26 @@ MOG
 
 if you want to change the weight of auxiliary classifier, you can modify the '--AC_weight' arguments in 'twin_ac_launch_cifar100_ema.sh' script. The same for AC-GAN and Projection-GAN, change script to 'ac_launch_cifar100_ema.sh' and 'projection_launch_cifar100_ema.sh' respectively.
 
+# Citation
+
+@article{DBLP:journals/corr/abs-1907-02690,
+  author    = {Mingming Gong and
+               Yanwu Xu and
+               Chunyuan Li and
+               Kun Zhang and
+               Kayhan Batmanghelich},
+  title     = {Twin Auxiliary Classifiers {GAN}},
+  journal   = {CoRR},
+  volume    = {abs/1907.02690},
+  year      = {2019},
+  url       = {http://arxiv.org/abs/1907.02690},
+  archivePrefix = {arXiv},
+  eprint    = {1907.02690},
+  timestamp = {Mon, 08 Jul 2019 14:12:33 +0200},
+  biburl    = {https://dblp.org/rec/bib/journals/corr/abs-1907-02690},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
 # Acknowledgments
 
 This work was partially supported by NIH Award Number 1R01HL141813-01, NSF 1839332 Tripod+X, and SAP SE. We gratefully acknowledge the support of NVIDIA Corporation with the donation of the Titan X Pascal GPU used for this research. We were also grateful for the computational resources provided by Pittsburgh SuperComputing grant number TG-ASC170024.
