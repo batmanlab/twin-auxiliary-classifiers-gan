@@ -74,7 +74,7 @@ if you want to change the weight of auxiliary classifier, you can modify the '--
 
 # Citation
 
-@article{DBLP:journals/corr/abs-1907-02690,
+```@article{DBLP:journals/corr/abs-1907-02690,
   author    = {Mingming Gong and
                Yanwu Xu and
                Chunyuan Li and
@@ -90,7 +90,7 @@ if you want to change the weight of auxiliary classifier, you can modify the '--
   timestamp = {Mon, 08 Jul 2019 14:12:33 +0200},
   biburl    = {https://dblp.org/rec/bib/journals/corr/abs-1907-02690},
   bibsource = {dblp computer science bibliography, https://dblp.org}
-}
+}```
 
 # Acknowledgments
 
