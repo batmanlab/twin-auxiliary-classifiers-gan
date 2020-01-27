@@ -42,13 +42,13 @@ def run(config):
   utils.seed_rng(config['seed'])
 
   # Prepare root folders if necessary
-  utils.prepare_root(config)
 
   # Setup cudnn.benchmark for free speed
   torch.backends.cudnn.benchmark = True
 
   experiment_name = (config['experiment_name'] if config['experiment_name']
                      else utils.name_from_config(config))
+  utils.prepare_root(config, experiment_name)
   print('Experiment name is %s' % experiment_name)
 
   model = BigGAN
@@ -111,11 +111,10 @@ def run(config):
   # Allow for different batch sizes in G
   G_batch_size = max(config['G_batch_size'], config['batch_size'])
   z_, y_ = utils.prepare_z_y(G_batch_size, G.dim_z, config['n_classes'],
-                             device=device, fp16=config['G_fp16'])
+                             device=device)
   # Prepare a fixed z & y to see individual sample evolution throghout training
   fixed_z, fixed_y = utils.prepare_z_y(G_batch_size, G.dim_z,
-                                       config['n_classes'], device=device,
-                                       fp16=config['G_fp16'])  
+                                       config['n_classes'], device=device)
   fixed_z.sample_()
   fixed_y.sample_()
   # Loaders are loaded, prepare the training function
@@ -142,10 +141,7 @@ def run(config):
       D.train()
       if config['ema']:
         G_ema.train()
-      if config['D_fp16']:
-        x, y = x.to(device).half(), y.to(device)
-      else:
-        x, y = x.to(device), y.to(device)
+      x, y = x.to(device), y.to(device)
       metrics = train(x, y)
 
       print(', '.join(['itr: %d' % state_dict['itr']]

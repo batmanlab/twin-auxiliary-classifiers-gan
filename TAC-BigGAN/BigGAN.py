@@ -136,7 +136,6 @@ class Generator(nn.Module):
                  else self.which_embedding)
     self.which_bn = functools.partial(layers.ccbn,
                           which_linear=bn_linear,
-                          cross_replica=self.cross_replica,
                           mybn=self.mybn,
                           input_size=(self.shared_dim + self.z_chunk_size if self.G_shared
                                       else self.n_classes),
@@ -176,7 +175,6 @@ class Generator(nn.Module):
     # output layer: batchnorm-relu-conv.
     # Consider using a non-spectral conv here
     self.output_layer = nn.Sequential(layers.bn(self.arch['out_channels'][-1],
-                                                cross_replica=self.cross_replica,
                                                 mybn=self.mybn),
                                     self.activation,
                                     self.which_conv(self.arch['out_channels'][-1], 3))

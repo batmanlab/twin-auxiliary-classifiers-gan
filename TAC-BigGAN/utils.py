@@ -290,7 +290,7 @@ def prepare_parser():
         help='Suffix for which weights to load (e.g. best0, copy0) '
              '(default: %(default)s)')
     parser.add_argument(
-        '--resume', action='store_true', default=True,
+        '--resume', action='store_true', default=False,
         help='Resume training? (default: %(default)s)')
 
     ### Log stuff ###
@@ -537,15 +537,17 @@ def update_config_roots(config):
 
 
 # Utility to prepare root folders if they don't exist; parent folder must exist
-def prepare_root(config):
+def prepare_root(config, experiment_name):
     for key in ['weights_root', 'logs_root', 'samples_root']:
         if not os.path.exists(config[key]):
             print('Making directory %s for %s...' % (config[key], key))
             os.mkdir(config[key])
 
         if not os.path.exists(config[key]+'/' + config['dataset']):
-            print('Making directory %s for %s...' % (config[key], key))
             os.mkdir(config[key]+'/' + config['dataset'])
+
+        if not os.path.exists(config[key]+'/'  + experiment_name):
+            os.mkdir(config[key]+'/'  + experiment_name)
 
 
 # Simple wrapper that applies EMA to a model. COuld be better done in 1.0 using
