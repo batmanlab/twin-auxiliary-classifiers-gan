@@ -47,7 +47,6 @@ To prepare for the env for running our code. cd the repository and run
 
 
 ```
-MOG
 ├── Twin_AC_simplified - easy read implementation.
    ├── main.py.py - Script to run 1-D MOG. - running file
 ```
@@ -73,7 +72,6 @@ FIrstly, you need to transfer imagenet1000 image to HDF5 file, follow the comman
 ### Running on Cifar100 and Imagenet1000
 
 ```
-MOG
 ├── TAC-BigGAN
    ├── scripts
       ├── twin_ac_launch_cifar100_ema.sh - Script to run TAC-GAN on cifar100
