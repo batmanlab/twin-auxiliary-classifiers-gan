@@ -42,6 +42,16 @@ To prepare for the env for running our code. cd the repository and run
   <img width="75%" height="%75" src="https://github.com/batmanlab/twin_ac/blob/master/figure/part_of_imagenet.png">
 </p>
 
+
+# To get the idea of our implemenation and run the simplified version of our method, do the follow:
+
+
+```
+MOG
+├── Twin_AC_simplified - easy read implementation.
+   ├── main.py.py - Script to run 1-D MOG. - running file
+```
+
 # To replicate our results of our NeuraIPS paper, do the follow:
 
 ## Simulation on MOG toy data
