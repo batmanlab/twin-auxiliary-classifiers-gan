@@ -83,22 +83,15 @@ if you want to change the weight of auxiliary classifier, you can modify the '--
 # Citation
 
 ```
-@article{DBLP:journals/corr/abs-1907-02690,
-  author    = {Mingming Gong and
-               Yanwu Xu and
-               Chunyuan Li and
-               Kun Zhang and
-               Kayhan Batmanghelich},
-  title     = {Twin Auxiliary Classifiers {GAN}},
-  journal   = {CoRR},
-  volume    = {abs/1907.02690},
-  year      = {2019},
-  url       = {http://arxiv.org/abs/1907.02690},
-  archivePrefix = {arXiv},
-  eprint    = {1907.02690},
-  timestamp = {Mon, 08 Jul 2019 14:12:33 +0200},
-  biburl    = {https://dblp.org/rec/bib/journals/corr/abs-1907-02690},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+@incollection{NIPS2019_8414,
+title = {Twin Auxilary Classifiers GAN},
+author = {Gong, Mingming and Xu, Yanwu and Li, Chunyuan and Zhang, Kun and Batmanghelich, Kayhan},
+booktitle = {Advances in Neural Information Processing Systems 32},
+editor = {H. Wallach and H. Larochelle and A. Beygelzimer and F. d\textquotesingle Alch\'{e}-Buc and E. Fox and R. Garnett},
+pages = {1330--1339},
+year = {2019},
+publisher = {Curran Associates, Inc.},
+url = {http://papers.nips.cc/paper/8414-twin-auxilary-classifiers-gan.pdf}
 }
 ```
 
