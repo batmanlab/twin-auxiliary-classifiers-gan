@@ -9,24 +9,38 @@
 
 import os
 import functools
-from tqdm import tqdm
+import math
+import numpy as np
+from tqdm import tqdm, trange
 
 
 import torch
 import torch.nn as nn
+from torch.nn import init
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.nn import Parameter as P
+import torchvision
+from utils import toggle_grad
 
 # Import my stuff
 import inception_utils
 import utils
+import losses
 import train_fns
 from sync_batchnorm import patch_replication_callback
 
-import BigGAN
+from Resnet import multi_resolution_resnet, Resnet_mi
 
 # The main training file. Config is a dictionary specifying the configuration
 # of this training run.
 def run(config):
 
+  # Update the config dict as necessary
+  # This is for convenience, to add settings derived from the user-specified
+  # configuration into the config-dict (e.g. inferring the number of classes
+  # and size of the images from the dataset, passing in a pytorch object
+  # for the activation specified as a string)
   config['resolution'] = utils.imsize_dict[config['dataset']]
   config['n_classes'] = utils.nclass_dict[config['dataset']]
   config['G_activation'] = utils.activation_dict[config['G_nl']]
@@ -47,17 +61,17 @@ def run(config):
   # Setup cudnn.benchmark for free speed
   torch.backends.cudnn.benchmark = True
 
+  # Import the model--this line allows us to dynamically select different files.
+  model = __import__(config['model'])
   experiment_name = (config['experiment_name'] if config['experiment_name']
-                     else utils.name_from_config(config))
+                       else utils.name_from_config(config))
   print('Experiment name is %s' % experiment_name)
-
-  model = BigGAN
 
   # Next, build the model
   G = model.Generator(**config).to(device)
   D = model.Discriminator(**config).to(device)
   
-   # If using EMA, prepare it (Earth Moving Averaging for parameters)
+   # If using EMA, prepare it
   if config['ema']:
     print('Preparing EMA for G with decay of {}'.format(config['ema_decay']))
     G_ema = model.Generator(**{**config, 'skip_init':True, 
@@ -65,9 +79,20 @@ def run(config):
     ema = utils.ema(G, G_ema, config['ema_decay'], config['ema_start'])
   else:
     ema = None
-
+  
+  # FP16?
+  if config['G_fp16']:
+    print('Casting G to float16...')
+    G = G.half()
+    if config['ema']:
+      G_ema = G_ema.half()
+  if config['D_fp16']:
+    print('Casting D to fp16...')
+    D = D.half()
+    # Consider automatically reducing SN_eps?
   GD = model.G_D(G, D)
-
+  print(G)
+  print(D)
   print('Number of params in G: {} D: {}'.format(
     *[sum([p.data.nelement() for p in net.parameters()]) for net in [G,D]]))
   # Prepare state dict, which holds things like epoch # and itr #
@@ -86,6 +111,9 @@ def run(config):
   if config['parallel']:
     GD = nn.DataParallel(GD)
 
+    if config['cross_replica']:
+      patch_replication_callback(GD)
+
   # Prepare loggers for stats; metrics holds test metrics,
   # lmetrics holds any desired training metrics.
   test_metrics_fname = '%s/%s_log.jsonl' % (config['logs_root'],
@@ -95,10 +123,15 @@ def run(config):
   test_log = utils.MetricsLogger(test_metrics_fname, 
                                  reinitialize=(not config['resume']))
   print('Training Metrics will be saved to {}'.format(train_metrics_fname))
-
+  train_log = utils.MyLogger(train_metrics_fname, 
+                             reinitialize=(not config['resume']),
+                             logstyle=config['logstyle'])
   # Write metadata
   utils.write_metadata(config['logs_root'], experiment_name, config, state_dict)
-
+  # Prepare data; the Discriminator's batch size is all that needs to be passed
+  # to the dataloader, as G doesn't require dataloading.
+  # Note that at every loader iteration we pass in enough data to complete
+  # a full D iteration (regardless of number of D steps and accumulations)
   D_batch_size = (config['batch_size'] * config['num_D_steps']
                   * config['num_D_accumulations'])
   loaders = utils.get_data_loaders(**{**config, 'batch_size': D_batch_size,
@@ -119,9 +152,12 @@ def run(config):
   fixed_z.sample_()
   fixed_y.sample_()
   # Loaders are loaded, prepare the training function
-  train = train_fns.GAN_training_function(G, D, GD, z_, y_,
+  if config['which_train_fn'] == 'GAN':
+    train = train_fns.GAN_training_function(G, D, GD, z_, y_,
                                             ema, state_dict, config)
-
+  # Else, assume debugging and use the dummy train fn
+  else:
+    train = train_fns.dummy_training_function()
   # Prepare Sample function for use with inception metrics
   sample = functools.partial(utils.sample,
                               G=(G_ema if config['ema'] and config['use_ema']
@@ -130,9 +166,12 @@ def run(config):
 
   print('Beginning training at epoch %d...' % state_dict['epoch'])
   # Train for specified number of epochs, although we mostly track G iterations.
-  for epoch in range(state_dict['epoch'], config['num_epochs']):
-
-    pbar = utils.progress(loaders[0],displaytype='s1k' if config['use_multiepoch_sampler'] else 'eta')
+  for epoch in range(state_dict['epoch'], config['num_epochs']):    
+    # Which progressbar to use? TQDM or my own?
+    if config['pbar'] == 'mine':
+      pbar = utils.progress(loaders[0],displaytype='s1k' if config['use_multiepoch_sampler'] else 'eta')
+    else:
+      pbar = tqdm(loaders[0])
     for i, (x, y) in enumerate(pbar):
       # Increment the iteration counter
       state_dict['itr'] += 1
@@ -147,8 +186,16 @@ def run(config):
       else:
         x, y = x.to(device), y.to(device)
       metrics = train(x, y)
+      # train_log.log(itr=int(state_dict['itr']), **metrics)
+      
+      # Every sv_log_interval, log singular values
+      if (config['sv_log_interval'] > 0) and (not (state_dict['itr'] % config['sv_log_interval'])):
+        train_log.log(itr=int(state_dict['itr']), 
+                      **{**utils.get_SVs(G, 'G'), **utils.get_SVs(D, 'D')})
 
-      print(', '.join(['itr: %d' % state_dict['itr']]
+      # If using my progbar, print metrics.
+      if config['pbar'] == 'mine':
+          print(', '.join(['itr: %d' % state_dict['itr']] 
                            + ['%s : %+4.3f' % (key, metrics[key])
                            for key in metrics]), end=' ')
 

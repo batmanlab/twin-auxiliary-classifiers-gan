@@ -55,29 +55,49 @@ def run(config):
   net = inception_utils.load_inception_net(parallel=config['parallel'])
   pool, logits, labels = [], [], []
   device = 'cuda'
+  init = 0
   for i, (x, y) in enumerate(tqdm(loaders[0])):
     x = x.to(device)
     with torch.no_grad():
-      pool_val, logits_val = net(x)
-      pool += [np.asarray(pool_val.cpu())]
-      logits += [np.asarray(F.softmax(logits_val, 1).cpu())]
-      labels += [np.asarray(y.cpu())]
+      if torch.sum(y==(init+1))>0:
+        init += 1
+        print(y[0], init)
+        pool_val, logits_val = net(x)
+        pool += [np.asarray(pool_val.cpu()[y==(init-1)])]
+        logits += [np.asarray(F.softmax(logits_val[y==(init-1)], 1).cpu())]
+        labels += [np.asarray(y.cpu()[y==(init-1)])]
+
+        pool, logits, labels = [np.concatenate(item, 0) for item in [pool, logits, labels]]
+        print('Calculating inception metrics...')
+        IS_mean, IS_std = inception_utils.calculate_inception_score(logits)
+        print('Training data from dataset %s has IS of %5.5f +/- %5.5f' % (config['dataset'], IS_mean, IS_std))
+
+        print('Calculating means and covariances...')
+        mu, sigma = np.mean(pool, axis=0), np.cov(pool, rowvar=False)
+        print('Saving calculated means and covariances to disk...')
+        np.savez('../inception_moment/'+str(init-1)+ '_' + config['dataset'].strip('_hdf5') + '_inception_moments.npz', **{'mu': mu, 'sigma': sigma})
+
+        pool, logits, labels = [], [], []
+        pool_val, logits_val = net(x)
+        pool += [np.asarray(pool_val.cpu()[y == (init)])]
+        logits += [np.asarray(F.softmax(logits_val[y == (init)], 1).cpu())]
+        labels += [np.asarray(y.cpu()[y == (init)])]
+      else:
+        pool_val, logits_val = net(x)
+        pool += [np.asarray(pool_val.cpu())]
+        logits += [np.asarray(F.softmax(logits_val, 1).cpu())]
+        labels += [np.asarray(y.cpu())]
 
   pool, logits, labels = [np.concatenate(item, 0) for item in [pool, logits, labels]]
-  # uncomment to save pool, logits, and labels to disk
-  # print('Saving pool, logits, and labels to disk...')
-  # np.savez(config['dataset']+'_inception_activations.npz',
-  #           {'pool': pool, 'logits': logits, 'labels': labels})
-  # Calculate inception metrics and report them
   print('Calculating inception metrics...')
   IS_mean, IS_std = inception_utils.calculate_inception_score(logits)
   print('Training data from dataset %s has IS of %5.5f +/- %5.5f' % (config['dataset'], IS_mean, IS_std))
-  # Prepare mu and sigma, save to disk. Remove "hdf5" by default 
-  # (the FID code also knows to strip "hdf5")
+
   print('Calculating means and covariances...')
   mu, sigma = np.mean(pool, axis=0), np.cov(pool, rowvar=False)
   print('Saving calculated means and covariances to disk...')
-  np.savez(config['dataset'].strip('_hdf5')+'_inception_moments.npz', **{'mu' : mu, 'sigma' : sigma})
+  np.savez('../inception_moment/' + str(init - 1) + '_' + config['dataset'].strip('_hdf5') + '_inception_moments.npz',
+           **{'mu': mu, 'sigma': sigma})
 
 def main():
   # parse command line    

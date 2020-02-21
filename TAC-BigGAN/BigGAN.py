@@ -56,10 +56,10 @@ class Generator(nn.Module):
                G_kernel_size=3, G_attn='64', n_classes=1000,
                num_G_SVs=1, num_G_SV_itrs=1,
                G_shared=True, shared_dim=0, hier=False,
-               mybn=False,
+               cross_replica=False, mybn=False,
                G_activation=nn.ReLU(inplace=False),
                G_lr=5e-5, G_B1=0.0, G_B2=0.999, adam_eps=1e-8,
-               BN_eps=1e-5, SN_eps=1e-12,
+               BN_eps=1e-5, SN_eps=1e-12, G_mixed_precision=False, G_fp16=False,
                G_init='ortho', skip_init=False, no_optim=False,
                G_param='SN', norm_style='bn',
                **kwargs):
@@ -88,6 +88,8 @@ class Generator(nn.Module):
     self.shared_dim = shared_dim if shared_dim > 0 else dim_z
     # Hierarchical latent space?
     self.hier = hier
+    # Cross replica batchnorm?
+    self.cross_replica = cross_replica
     # Use my batchnorm?
     self.mybn = mybn
     # nonlinearity for residual blocks
@@ -102,6 +104,8 @@ class Generator(nn.Module):
     self.BN_eps = BN_eps
     # Epsilon for Spectral Norm?
     self.SN_eps = SN_eps
+    # fp16?
+    self.fp16 = G_fp16
     # Architecture dict
     self.arch = G_arch(self.ch, self.attention)[resolution]
 
@@ -190,8 +194,14 @@ class Generator(nn.Module):
     if no_optim:
       return
     self.lr, self.B1, self.B2, self.adam_eps = G_lr, G_B1, G_B2, adam_eps
-
-    self.optim = optim.Adam(params=self.parameters(), lr=self.lr,
+    if G_mixed_precision:
+      print('Using fp16 adam in G...')
+      import utils
+      self.optim = utils.Adam16(params=self.parameters(), lr=self.lr,
+                           betas=(self.B1, self.B2), weight_decay=0,
+                           eps=self.adam_eps)
+    else:
+      self.optim = optim.Adam(params=self.parameters(), lr=self.lr,
                            betas=(self.B1, self.B2), weight_decay=0,
                            eps=self.adam_eps)
 
@@ -329,7 +339,6 @@ class Discriminator(nn.Module):
     # self.blocks is a doubly-nested list of modules, the outer loop intended
     # to be over blocks at a given resolution (resblocks and/or self-attention)
     self.blocks = []
-    self.pac_conv = self.which_conv(self.arch['in_channels'][0] * 4, self.arch['in_channels'][0])
     for index in range(len(self.arch['out_channels'])):
       self.blocks += [[layers.DBlock(in_channels=self.arch['in_channels'][index],
                        out_channels=self.arch['out_channels'][index],
@@ -348,14 +357,13 @@ class Discriminator(nn.Module):
     # Linear output layer. The output dimension is typically 1, but may be
     # larger if we're e.g. turning this into a VAE with an inference output
     self.linear = self.which_linear(self.arch['out_channels'][-1], output_dim)
-    self.linear_mi = self.which_linear(self.arch['out_channels'][-1], n_classes)
-    self.linear_c = self.which_linear(self.arch['out_channels'][-1], n_classes)
+
     # Embedding for projection discrimination
     if self.AC:
-        pass
-    else:
-        self.embed = self.which_embedding(self.n_classes, self.arch['out_channels'][-1])
+        self.linear_mi = self.which_linear(self.arch['out_channels'][-1], n_classes)
 
+
+    self.linear_c = self.which_linear(self.arch['out_channels'][-1], n_classes)
     # Initialize weights
     if not skip_init:
       self.init_weights()
@@ -375,6 +383,18 @@ class Discriminator(nn.Module):
     # self.j = 0
 
   # Initialize
+  def choose_prob(self,prob,y):
+      len = prob.size()[0]
+
+      index_list = [[], []]
+      for i in range(len):
+          index_list[0].append(i)
+          index_list[1].append(np.asscalar(y[i].cpu().detach().numpy()))
+
+      prob_choose = prob[index_list]
+      prob_choose = (prob_choose.squeeze()).unsqueeze(dim=1)
+      return prob_choose
+
   def init_weights(self):
     self.param_count = 0
     for module in self.modules():
@@ -392,10 +412,8 @@ class Discriminator(nn.Module):
         self.param_count += sum([p.data.nelement() for p in module.parameters()])
     print('Param count for D''s initialized parameters: %d' % self.param_count)
 
-  def forward(self, x, y=None, pack=False):
-      # Stick x into h for cleaner for loops without flow control
-    if pack:
-       x = self.pac_conv(x)
+  def forward(self, x, y=None):
+    # Stick x into h for cleaner for loops without flow control
     h = x
     # Loop over blocks
     for index, blocklist in enumerate(self.blocks):
@@ -405,18 +423,17 @@ class Discriminator(nn.Module):
     h = torch.sum(self.activation(h), [2, 3])
     # Get initial class-unconditional output
     out = self.linear(h)
-    out_mi = self.linear_mi(h)
-    out_c = self.linear_c(h)
-    # Get projection of final featureset onto class vectors and add to evidence
     if self.AC:
-        pass
+        out_mi = self.linear_mi(h)
+        out_c = self.linear_c(h)
+        return out, out_mi, out_c
     else:
-        if pack:
-            out = out
-        else:
-            out = torch.sum(self.embed(y) * h, 1, keepdim=True)
+        proj_c = self.linear_c(h)
+        if y is not None:
+            proj = self.choose_prob(proj_c, y)
+            out += proj
         # print('using projection')
-    return out,out_mi,out_c
+        return out,proj_c,proj_c
 
 # Parallelized G_D to minimize cross-gpu communication
 # Without this, Generator outputs would get all-gathered and then rebroadcast.
@@ -432,6 +449,11 @@ class G_D(nn.Module):
     with torch.set_grad_enabled(train_G):
       # Get Generator output given noise
       G_z = self.G(z, self.G.shared(gy))
+      # Cast as necessary
+      if self.G.fp16 and not self.D.fp16:
+        G_z = G_z.float()
+      if self.D.fp16 and not self.G.fp16:
+        G_z = G_z.half()
     # Split_D means to run D once with real data and once with fake,
     # rather than concatenating along the batch dimension.
     if split_D:
@@ -452,10 +474,7 @@ class G_D(nn.Module):
       # Get Discriminator output
       D_out, mi, cls = self.D(D_input, D_class)
       if x is not None:
-          if return_G_z:
-              return D_out[:G_z.shape[0]], D_out[G_z.shape[0]:], mi, cls, G_z  # D_fake, D_real
-          else:
-              return D_out[:G_z.shape[0]], D_out[G_z.shape[0]:], mi, cls  # D_fake, D_real
+        return D_out[:G_z.shape[0]], D_out[G_z.shape[0]:],mi, cls # D_fake, D_real
       else:
         if return_G_z:
           return D_out, G_z, mi, cls

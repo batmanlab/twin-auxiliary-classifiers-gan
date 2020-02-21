@@ -9,6 +9,51 @@ import torch.nn.functional as F
 
 import utils
 import losses
+import numpy as np
+
+
+# Dummy training function for debugging
+def dummy_training_function():
+  def train(x, y):
+    return {}
+  return train
+
+def hinge_multi(prob,y,hinge=True):
+
+    len = prob.size()[0]
+
+    index_list = [[],[]]
+
+    for i in range(len):
+        index_list[0].append(i)
+        index_list[1].append(np.asscalar(y[i].cpu().detach().numpy()))
+
+    prob_choose = prob[index_list]
+    prob_choose = (prob_choose.squeeze()).unsqueeze(dim=1)
+
+    if hinge == True:
+        loss = ((1-prob_choose+prob).clamp(min=0)).mean()
+    else:
+        loss = (1-prob_choose+prob).mean()
+
+    return loss
+
+# def hinge_multi_gen(prob,y):
+#
+#     len = prob.size()[0]
+#
+#     index_list = [[],[]]
+#
+#     for i in range(len):
+#         index_list[0].append(i)
+#         index_list[1].append(np.asscalar(y[i].cpu().detach().numpy()))
+#
+#     prob_choose = prob[index_list]
+#     prob_choose = (prob_choose.squeeze()).unsqueeze(dim=1)
+#
+#     loss = ((-1-prob_choose+prob).clamp(max=0)).mean()
+#
+#     return loss
 
 
 def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config):
@@ -30,32 +75,29 @@ def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config):
       for accumulation_index in range(config['num_D_accumulations']):
         z_.sample_()
         y_.sample_()
-        D_fake, D_real, mi, c_cls, G_z = GD(z_[:config['batch_size']], y_[:config['batch_size']],
+        D_fake, D_real, mi, c_cls = GD(z_[:config['batch_size']], y_[:config['batch_size']],
                             x[counter], y[counter], train_G=False, 
-                            split_D=config['split_D'],return_G_z=True)
-
-        D_loss_real, D_loss_fake = losses.discriminator_loss(D_fake, D_real)
-
+                            split_D=config['split_D'])
+         
         # Compute components of D's loss, average them, and divide by 
         # the number of gradient accumulations
+        D_loss_real, D_loss_fake = losses.discriminator_loss(D_fake, D_real)
         C_loss = 0
         if config['loss_type'] == 'Twin_AC':
             C_loss += F.cross_entropy(c_cls[D_fake.shape[0]:] ,y[counter]) + F.cross_entropy(mi[:D_fake.shape[0]] ,y_)
+        if config['loss_type'] == 'Twin_AC_M':
+            C_loss += hinge_multi(c_cls[D_fake.shape[0]:], y[counter]) + hinge_multi(mi[:D_fake.shape[0]], y_)
         if config['loss_type'] == 'AC':
             C_loss += F.cross_entropy(c_cls[D_fake.shape[0]:] ,y[counter])
-        if config['Pac']:
-            T_img = x[counter].view(-1, 4 * x[counter].size()[1], x[counter].size()[2], x[counter].size()[3])
-            F_img = G_z.view(-1, 4 * G_z.size()[1], G_z.size()[2], G_z.size()[3])
-            pack_img = torch.cat([T_img, F_img], dim=0)
-            pack_out, _, _ = D(pack_img, pack=True)
-            D_real_pac = pack_out[:T_img.size()[0]]
-            D_fake_pac = pack_out[T_img.size()[0]:]
-            D_loss_real_pac, D_loss_fake_pac = losses.discriminator_loss(D_fake_pac, D_real_pac)
-            D_loss_real += D_loss_real_pac
-            D_loss_fake += D_loss_fake_pac
         D_loss = (D_loss_real + D_loss_fake + C_loss*config['AC_weight']) / float(config['num_D_accumulations'])
         D_loss.backward()
         counter += 1
+        
+      # Optionally apply ortho reg in D
+      if config['D_ortho'] > 0.0:
+        # Debug print to indicate we're using ortho reg in D.
+        print('using modified ortho reg in D')
+        utils.ortho(D, config['D_ortho'])
       
       D.optim.step()
     
@@ -72,23 +114,25 @@ def GAN_training_function(G, D, GD, z_, y_, ema, state_dict, config):
             D_fake, G_z, mi, c_cls = GD(z_, y_, train_G=True, split_D=config['split_D'], return_G_z=True)
             C_loss = 0
             MI_loss = 0
-            G_loss = losses.generator_loss(D_fake)
             if config['loss_type'] == 'AC' or config['loss_type'] == 'Twin_AC':
                 C_loss = F.cross_entropy(c_cls, y_)
                 if config['loss_type'] == 'Twin_AC':
                     MI_loss = F.cross_entropy(mi, y_)
+            if config['loss_type'] == 'Twin_AC_M':
+                C_loss = hinge_multi(c_cls, y_,hinge=False)
+                MI_loss = hinge_multi(mi, y_, hinge=False)
 
-            if config['Pac']:
-                F_img = G_z.view(-1, 4 * G_z.size()[1], G_z.size()[2], G_z.size()[3])
-                D_fake_pac, _, _ = D(F_img, pack=True)
-                G_loss_pac = losses.generator_loss(D_fake_pac)
-                G_loss += G_loss_pac
-
-            G_loss = G_loss / float(config['num_G_accumulations'])
+            G_loss = losses.generator_loss(D_fake) / float(config['num_G_accumulations'])
             C_loss = C_loss / float(config['num_G_accumulations'])
             MI_loss = MI_loss / float(config['num_G_accumulations'])
             (G_loss + (C_loss - MI_loss)*config['AC_weight']).backward()
 
+        # Optionally apply modified ortho reg in G
+        if config['G_ortho'] > 0.0:
+            print('using modified ortho reg in G')  # Debug print to indicate we're using ortho reg in G
+            # Don't ortho reg shared, it makes no sense. Really we should blacklist any embeddings for this
+            utils.ortho(G, config['G_ortho'],
+                        blacklist=[param for param in G.shared.parameters()])
         G.optim.step()
     
     # If we have an ema, update it, regardless of if we test with it or not

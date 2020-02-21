@@ -428,6 +428,7 @@ class DBlock(nn.Module):
     if self.learnable_sc:
       self.conv_sc = self.which_conv(in_channels, out_channels, 
                                      kernel_size=1, padding=0)
+
   def shortcut(self, x):
     if self.preactivation:
       if self.learnable_sc:

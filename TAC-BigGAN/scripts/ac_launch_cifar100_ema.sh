@@ -1,7 +1,7 @@
 #!/bin/bash
 export HDF5_USE_FILE_LOCKING='FALSE'
 CUDA_VISIBLE_DEVICES=0,1 python train.py \
---loss_type AC --AC --Pac \
+--loss_type AC --AC \
 --AC_weight 1.0 \
 --shuffle --batch_size 100 --parallel \
 --num_G_accumulations 1 --num_D_accumulations 1 --num_epochs 500 \
@@ -10,5 +10,5 @@ CUDA_VISIBLE_DEVICES=0,1 python train.py \
 --G_ortho 0.0 \
 --G_attn 0 --D_attn 0 \
 --G_init N02 --D_init N02 \
---test_every 8000 --save_every 1000 --num_best_copies 5 --num_save_copies 2 --seed 2020 \
+--test_every 8000 --save_every 1000 --num_best_copies 5 --num_save_copies 2 --seed 2018 \
 --ema  --use_ema --ema_start 10000 \
