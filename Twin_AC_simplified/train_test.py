@@ -71,6 +71,14 @@ def train_g(netd_g, netg, dataset, step, opt):
 
         image_c,label = next(data_loader)
 
+        # if torch.sum(label==2)>0:
+        #     img = image_c[label==2]
+        #     img = img[0].squeeze()
+        #     img = (img.cpu().numpy()+1)/2
+        #     plt.imshow(img, cmap="gray")
+        #     plt.show()
+
+
         # real_data0 = image_c[label==0][:24]
         # real_data1 = image_c[label==1][:24]
         #

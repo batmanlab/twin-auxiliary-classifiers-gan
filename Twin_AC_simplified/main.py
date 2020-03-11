@@ -17,7 +17,7 @@ from inception import load_inception_net
 
 
 
-from train_test import train_g,train_c,toggle_grad,test_acc
+from train_test import train_g
 from torchvision import datasets, transforms
 import torch.nn as nn
 
@@ -34,24 +34,23 @@ def adjust_learning_rate(optimizer, epoch):
 #
 def args():
     FLAG = argparse.ArgumentParser(description='ACGAN Implement With Pytorch.')
-    FLAG.add_argument('--dataset', default='VGGFACE',type=str, help='CIFAR10| CIFAR100 | MNIST | CUB | VGGFACE | IMAGENET100 | MNIST_overlap')
+    FLAG.add_argument('--dataset', default='OMNIGLOT',type=str, help='CIFAR10| CIFAR100 | MNIST | CUB | VGGFACE | IMAGENET100 | MNIST_overlap')
     FLAG.add_argument('--savingroot', default='../result', help='path to saving.')
     FLAG.add_argument('--dataroot', default='../data', help='path to dataset.')
     FLAG.add_argument('--manual_seed', default=42, help='manual seed.')
-    FLAG.add_argument('--image_size', default=64,type=int, help='image size.')
+    FLAG.add_argument('--image_size', default=32,type=int, help='image size.')
     FLAG.add_argument('--batch_size', default=200,type=int,help='batch size.')
     FLAG.add_argument('--num_workers', default=32, help='num workers.')
     FLAG.add_argument('--iter', default=100000, type=int, help='num epoches, suggest MNIST: 20, CIFAR10: 500')
     FLAG.add_argument('--num_epoches_c', default=20, type=int, help='num epoches for training classifier')
-    FLAG.add_argument('--num_D_steps', default=2, type=int, help='num_D_steps.')
-    FLAG.add_argument('--num_G_steps', default=2, type=int, help='num_D_steps.')
-    FLAG.add_argument('--num_MI_steps', default=1, type=int, help='num_D_steps.')
+    FLAG.add_argument('--num_D_steps', default=4, type=int, help='num_D_steps.')
+    FLAG.add_argument('--num_G_steps', default=1, type=int, help='num_D_steps.')
     FLAG.add_argument('--nc', default=3, help='channel of input image; gray:1, RGB:3')
-    FLAG.add_argument('--num_classes', default=10,type=int, help='10,100,1000')
-    FLAG.add_argument('--C_w', default=1.0, type=float, help='weight of classifier')
+    FLAG.add_argument('--num_classes', default=1622,type=int, help='10,100,1000')
+    FLAG.add_argument('--C_w', default=0.5, type=float, help='weight of classifier')
     FLAG.add_argument('--nz', default=128, help='length of noize.')
 
-    FLAG.add_argument('--model_type', default='sa', help='network structure, "sa" and "big", biggan give you amazing result')
+    FLAG.add_argument('--model_type', default='big', help='network structure, "sa" and "big", biggan give you amazing result')
     FLAG.add_argument('--loss_type', default='Twin_AC', type=str, help='conditional loss funtion, Projection | Twin_AC | AC')
     FLAG.add_argument('--SN', default=True, type=bool,help='SN in G')
     arguments = FLAG.parse_args()
@@ -80,7 +79,7 @@ def train_gan(opt):
         netd_g = nn.DataParallel(
             SA_Discriminator(n_class=opt.num_classes, nc=opt.nc, AC=AC, Resolution=opt.image_size,ch=64).cuda())
         netg = nn.DataParallel(SA_Generator(n_class=opt.num_classes, code_dim=opt.nz, nc=opt.nc, SN=opt.SN,
-                                            Resolution=opt.image_size,ch=64).cuda())
+                                            Resolution=opt.image_size,ch=32).cuda())
     elif opt.model_type == 'big':
         AC = False
         if opt.loss_type == 'Projection':
@@ -107,6 +106,8 @@ def train_gan(opt):
         dataset = Load_numpy_data(root='../data/ImageNet100.pt', transform=tsfm)
     elif opt.data_r == 'MNIST_overlap':
         dataset = Load_gray_data(root='../data/overlap_MNIST.pt', transform=tsfm)
+    elif opt.data_r == 'OMNIGLOT':
+        dataset = dset.Omniglot('../result',transform=tsfm,download=True)#Load_gray_data(root='omniglot.pt', transform=tsfm)
 
     print('training_start')
     print(opt.loss_type)
@@ -125,7 +126,8 @@ if __name__ == '__main__':
     tsfm = transforms.Compose([
         transforms.Resize(opt.image_size),
         transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        transforms.Lambda(lambda x: x.repeat(3, 1, 1)),
+        transforms.Normalize([0.5], [0.5]),
     ])
 
 

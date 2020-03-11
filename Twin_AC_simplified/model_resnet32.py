@@ -226,7 +226,7 @@ class ConvBlock(nn.Module):
 
 
 class SA_Generator(nn.Module):
-    def __init__(self, code_dim=100, n_class=100,nc=3, SN=True,Resolution=64,ch=64,SA_Resolution=256):
+    def __init__(self, code_dim=100, n_class=100,nc=3, SN=True,Resolution=32,ch=64,SA_Resolution=256):
         super().__init__()
 
         self.ch = ch
@@ -257,7 +257,7 @@ class SA_Generator(nn.Module):
         else:
             self.colorize = nn.Conv2d(ch*4, nc, [3, 3], padding=1)
 
-        self.optim = optim.Adam(params=self.parameters(), lr=1e-4,
+        self.optim = optim.Adam(params=self.parameters(), lr=2e-4,
                                 betas=(0.0, 0.999), eps=1e-8)
         self.init_weights()
 
@@ -377,7 +377,7 @@ class SA_Discriminator(nn.Module):
             self.linear_mi = nn.Linear(ch * 4, n_class)
             self.linear_c = nn.Linear(ch * 4, n_class)
 
-        self.optim = optim.Adam(params=self.parameters(), lr=4e-4,
+        self.optim = optim.Adam(params=self.parameters(), lr=2e-4,
                             betas=(0.0, 0.999), weight_decay=0, eps=1e-8)
         self.init_weights()
 
@@ -395,7 +395,7 @@ class SA_Discriminator(nn.Module):
                     or isinstance(module, nn.Embedding)):
                 init.orthogonal_(module.weight)
                 self.param_count += sum([p.data.nelement() for p in module.parameters()])
-        print('Param count for G''s initialized parameters: %d' % self.param_count)
+        print('Param count for D''s initialized parameters: %d' % self.param_count)
 
 
     def forward(self, input,class_id=None):
