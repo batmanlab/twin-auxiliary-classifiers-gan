@@ -16,7 +16,7 @@ Visualize the biased reconstruction of AC-GAN and our TAC-GAN correction to this
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
 ![](MOG/tac_gif_1D/o.gif)  |  ![](MOG/tac_gif_1D/twin_ac.gif) | ![](MOG/tac_gif_1D/ac.gif)  |  ![](MOG/tac_gif_1D/projection.gif)
 
-## Experimemnts on real data
+## Experiments on real data
 This implementation on cifar100 and Imagenet100 is based on [pytorch of BigGAN](https://github.com/ajbrock/BigGAN-PyTorch) implementation
 To prepare for the env for running our code. cd the repository and run 
 
@@ -43,7 +43,7 @@ To prepare for the env for running our code. cd the repository and run
 </p>
 
 
-# To get the idea of our implemenation and run the simplified version of our method, do the follow:
+# To get the idea of our implementation and run the simplified version of our method, do the follow:
 
 
 ```
@@ -51,7 +51,7 @@ To prepare for the env for running our code. cd the repository and run
    ├── main.py.py - Script to run 1-D MOG. - running file
 ```
 
-# To replicate our results of our NeuraIPS paper, do the follow:
+# To replicate our results of our NeurIPS paper, do the follow:
 
 ## Simulation on MOG toy data
 
