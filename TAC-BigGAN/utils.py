@@ -16,7 +16,6 @@ import datetime
 import json
 import pickle
 from argparse import ArgumentParser
-import animal_hash
 
 import torch
 import torch.nn as nn
